@@ -38,5 +38,14 @@ def get_total_revenue():
 # 4. No logging => we have no visibility into what is happening
 # 5. No structure => we have no way to query the events or calculate revenue for a specific time period
 
+#IMPLEMENTATION
+# 1. Introduced a PaymentEvent dataclass to improve structure and readability
+# 2. I created a PaymentRepository class to seperate storage logic
+# 3. I added duplicate protection using event_id as a unique identifier in the repository(Ensures Idempotency)
+# 4. I introduced logging to provide visibility into the system's operations
+# 5. I created the PaymentService class to handle business logic and better for testing and maintainability
 
+
+# Production - How to scale this system?
+# 1. I would not store events in memory. I would store them in a database like PostgresSQL.
 
