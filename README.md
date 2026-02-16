@@ -59,3 +59,256 @@ def get_total_revenue():
    #### 1. I would add structured logging
    #### 2. I would also add metrics so that we can monitor the system's performance and health.
    #### 3. Number of events processed => Failures, Duplicates => For this i would use monitoring tools like Prometheus and Grafana to visualize the metrics and set up alerts for any anomalies.
+
+
+
+
+
+# Stripe Webhook Handler — Scalable Production Design
+Initial Implementation
+
+Stripe sends events when a payment is successful. The webhook handler receives these events, stores them, prevents duplicates, and calculates total revenue.
+
+```
+events = []
+
+def handle_event(event):
+    if event["type"] == "payment_intent.succeeded":
+        events.append(event)
+
+def get_total_revenue():
+    total = 0
+    for event in events:
+        total += event["data"]["object"]["amount"]
+    return total
+
+```
+
+# Requirements Clarification
+
+    Before making changes, I would clarify the requirements:
+
+    Can Stripe send duplicate events?
+    Yes, Stripe webhooks are at-least-once delivery, so duplicates are possible.
+
+    Do events need to be persisted long-term?
+    Yes, events must not be lost.
+
+    How many events per second do we expect?
+    This helps determine scalability requirements.
+
+    Do we need to support concurrent processing?
+    Yes, production systems must handle concurrent requests safely.
+
+    Do we need observability like logging and metrics?
+    Yes, observability is critical for debugging and monitoring.
+
+    Issues with Current Implementation
+
+    The current implementation has several limitations:
+
+ #### 1. Uses global variable
+
+    Not thread-safe
+    Not scalable
+    Data will be lost if server restarts
+
+ #### 2. No duplicate protection
+
+    Stripe can resend the same event.
+
+    This would result in revenue being counted multiple times.
+
+ #### 3. No persistence
+
+    Events are stored only in memory.
+
+    If the server crashes, all data is lost.
+
+ #### 4. No logging
+
+    There is no visibility into:
+
+    • What events were received
+    • Whether processing failed
+    • Whether duplicates occurred
+
+ #### 5. No structure
+
+    Events are stored as raw dictionaries.
+
+    This makes querying and maintenance difficult.
+
+    Improved Implementation
+
+To address these issues, I made the following design improvements:
+
+ #### 1. Introduced PaymentEvent Dataclass
+
+    This improves:
+
+    • Readability
+    • Type safety
+    • Maintainability
+
+    Example:
+    ```
+    @dataclass
+    class PaymentEvent:
+        event_id: str
+        amount: int
+    ````
+
+ #### 2. Created PaymentRepository
+
+    This separates storage logic from business logic.
+
+    Benefits:
+
+    • Clean architecture
+    • Easier testing
+    • Better scalability
+
+ #### 3. Added Duplicate Protection (Idempotency)
+
+    Each Stripe event has a unique event_id.
+
+    I enforce uniqueness in the repository.
+
+    This ensures duplicate events are ignored.
+
+    This guarantees idempotent processing, which is critical for webhook systems.
+
+ #### 4. Introduced Logging
+
+    I added structured logging to provide visibility.
+
+    This helps track:
+
+    • Events received
+    • Duplicate events
+    • Failures
+
+    Example:
+
+    event_saved
+    duplicate_event
+    processing_failed
+
+ #### 5. Created PaymentService Layer
+
+    This separates business logic from storage.
+
+    Benefits:
+
+    • Better organization
+    • Easier testing
+    • More maintainable code
+
+# Production-Scale Design
+
+For production scalability, I would make the following improvements:
+
+ #### 1. Use Persistent Database (PostgreSQL)
+
+    Instead of storing events in memory, I would store them in a database such as PostgreSQL.
+
+    Benefits:
+
+    • Prevents data loss
+    • Supports querying and analytics
+    • Ensures durability
+
+ #### 2. Introduce Message Queue (Kafka or SQS)
+
+    architecture:
+    ```
+    Stripe Webhook
+        ↓
+    API Service
+        ↓
+    Message Queue (Kafka / SQS)
+        ↓
+    Worker Service
+        ↓
+    Database
+    ```
+
+ #### 3. Worker-based Asynchronous Processing
+
+    Worker consumes events from queue and stores them in database.
+
+    Benefits:
+
+    • Improves scalability
+    • Improves reliability
+    • Enables horizontal scaling
+
+    Multiple workers can run in parallel.
+
+ #### 4. Fault Tolerance
+
+    Message queue ensures events are not lost even if worker crashes.
+
+    Workers can resume processing later.
+
+    Observability Improvements
+
+    To monitor system health, I would add:
+
+# Structured Logging
+
+    Structured JSON logs improve debugging and tracing.
+
+        Example:
+        ```
+        {
+        "event_id": "evt_123",
+        "status": "processed"
+        }
+        ```
+
+# Metrics Monitoring
+
+    I would track metrics such as:
+
+    • Number of events processed
+    • Number of duplicate events
+    • Number of failed events
+    • Processing latency
+
+    Monitoring Tools
+
+    I would use:
+
+    • Prometheus → Collect metrics
+    • Grafana → Visualize metrics and alerts
+
+
+# Final Production Architecture
+    ```
+    Stripe
+    ↓
+    Webhook API (FastAPI)
+    ↓
+    Kafka / SQS
+    ↓
+    Worker Service
+    ↓
+    PostgreSQL
+    ↓
+    Monitoring (Prometheus + Grafana)
+    ```
+
+"I started by identifying issues in the original implementation such as lack of persistence, duplicate handling, and scalability."
+
+"I introduced a structured PaymentEvent model and separated business logic and storage using service and repository layers."
+
+"I added idempotency using event_id to prevent duplicate processing."
+
+"For production scalability, I would store events in PostgreSQL and use Kafka or SQS for asynchronous processing."
+
+"This allows horizontal scaling and ensures fault tolerance."
+
+"I also added structured logging and metrics using Prometheus and Grafana to improve observability."
+
