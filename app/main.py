@@ -1,36 +1,23 @@
-from app.repository import PaymentRepository
-from app.service import PaymentService
+from fastapi import FastAPI
+from app.queue import publish
 
-repository = PaymentRepository()
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 
-service = PaymentService(repository)
+app = FastAPI() # Initialize FastAPI application
 
-# Simulate Stripe event
+@app.get("/")
+def root():
+    return {"message": "Welcome to the Stripe Webhook Processor!"} # Basic root endpoint for testing
 
-stripe_events = [
-    {
-        "id": "evt_1",
-        "type": "payment_intent.succeeded",
-        "data": {"object": {"amount": 1000}}
-    },
-    {
-        "id": "evt_2",
-        "type": "payment_intent.succeeded",
-        "data": {"object": {"amount": 2000}}
-    },
-    {
-        "id": "evt_3",
-        "type": "payment_intent.failed",
-        "data": {"object": {"amount": 1500}}
-    },
-    {
-        "id": "evt_4",
-        "type": "payment_intent.succeeded",
-        "data": {"object": {"amount": 4000}}
-    }
-]
+@app.post("/webhook")
+async def stripe_webhook(event: dict):
+    publish(event) # Publish the incoming Stripe event to the queue for processing
+    return {"status": "accepted"} # Return a response indicating the event was accepted for processing
 
-
-service.handle_events(stripe_events)
-
-print(f"Total Revenue: {service.get_total_revenue()}")
+@app.get("/metrics")
+def metrics():
+    return Response(
+        generate_latest(), # Generate the latest Prometheus metrics
+        media_type=CONTENT_TYPE_LATEST # Set the content type for Prometheus metrics
+    )
