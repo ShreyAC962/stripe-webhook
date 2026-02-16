@@ -7,7 +7,7 @@ from app.models import PaymentEvent
 
 
 class PaymentRepository:
-    def save(self,  event_schema):
+    def save(self, event_schema):
         session = SessionLocal() 
         try:
             event = PaymentEvent(
