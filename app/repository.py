@@ -7,7 +7,7 @@ logging.basicConfig(level = logging.INFO)
 class PaymentRepository:
     def __init__(self):
         self.events = {}
-        logging.info("PaymentRepository initialized")
+        logging.info("Payment Repository initialized")
 
     def save_event(self, payment_event : PaymentEvent):
         if payment_event.event_id in self.events:
