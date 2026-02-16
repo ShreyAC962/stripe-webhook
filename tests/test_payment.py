@@ -1,9 +1,7 @@
-from app.repository import PaymentRepository
 from app.service import PaymentService
 
 def test_payment_event():
-    repo = PaymentRepository()
-    service = PaymentService(repo)
+    service = PaymentService()
 
     event = [
             {
