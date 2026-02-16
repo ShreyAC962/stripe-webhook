@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from sqlalchemy import Column, String, Integer
 
-@dataclass
-class PaymentEvent:
-    event_id : str
-    amount : int
+from app.database import Base
+
+class PaymentEvent(Base):
+    __tablename__ = "payment_events"
+    event_id = Column(String, primary_key=True)
+    amount = Column(Integer)

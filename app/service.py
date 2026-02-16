@@ -1,4 +1,4 @@
-from app.models import PaymentEvent
+from app.schemas import PaymentEventSchema
 
 class PaymentService:
 
@@ -9,7 +9,7 @@ class PaymentService:
         for event in stripe_event:
             if event["type"] != "payment_intent.succeeded":
                 continue
-            payment_event = PaymentEvent(
+            payment_event = PaymentEventSchema(
                 event_id = event["id"],
                 amount = event["data"]["object"]["amount"]
             )

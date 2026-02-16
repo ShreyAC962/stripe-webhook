@@ -1,6 +1,6 @@
 import logging
 
-from app.models import PaymentEvent
+from app.schemas import PaymentEventSchema
 
 logging.basicConfig(level = logging.INFO)
 
@@ -9,7 +9,7 @@ class PaymentRepository:
         self.events = {}
         logging.info("Payment Repository initialized")
 
-    def save_event(self, payment_event : PaymentEvent):
+    def save_event(self, payment_event : PaymentEventSchema):
         if payment_event.event_id in self.events:
             logging.warning(f"Duplicate event detected: {payment_event.event_id}")
             return 
