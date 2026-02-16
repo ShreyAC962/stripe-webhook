@@ -14,6 +14,6 @@ def test_payment_event():
         }
     ]
 
-    service.handle_events(event)
+    result = service.process_event(event)
 
-    assert service.get_total_revenue() == 5000
+    assert result.amount == 100
