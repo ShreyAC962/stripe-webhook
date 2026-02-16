@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 pytest # For testing the application
 fastapi # For building the API
 uvicorn # For running the FastAPI application
 sqlalchemy # For database interactions
 psycopg2-binary # PostgreSQL database adapter
 prometheus-client # For Prometheus metrics
+=======
+pytest
+>>>>>>> origin/main
