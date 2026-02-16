@@ -6,7 +6,6 @@ def test_payment_event():
     event = [
             {
                 "id": "evt_test_1",
-                "type":"payment_intent.succeeded",
                 "data": {
                     "object": {
                         "amount": 5000
